@@ -90,7 +90,7 @@ def save_session(duration): #sesiones guardadas
     sessions.append(new_session) #la nueva sesion se agrega a la lista
 
     with open(archive_json, "w", encoding="utf-8") as archivo: #se vuelve a guardar todo en el archivo
-        json.dump(sessions, archivo, indent=4)
+        json.dump(sessions, archivo, indent=4) #json.dump toma el contenido de la variable sessions y lo escribe en el json
     
     print("Session saved successfully")
 
@@ -111,15 +111,15 @@ def weekly_report():  # informe semanal
         fecha_str = sesion["date"]  # "2025-07-24"
         duration = sesion["duration"]
 
-        fecha = date.fromisoformat(fecha_str)
+        fecha = date.fromisoformat(fecha_str) #convertir texto en objeto tipo fecha
         name_day = fecha.strftime("%A")  # Monday, Tuesday...
 
-        if name_day in summary:
+        if name_day in summary: #actualizar el resumen semanal
             summary[name_day]["count"] += 1
             summary[name_day]["duration"] += duration
             summary[name_day]["sessions"].append(duration)
 
-    print("\n📊Weekly Report:")
+    print("\nWeekly Report:")
 
     total_duration = 0
     total_duration_habil = 0  # lunes a viernes
@@ -158,8 +158,61 @@ def weekly_report():  # informe semanal
     else:
         print("daleeee metele vagoneta💪. ACTIVAME EL MODO ELON🔥.")
 
+def monthly_report():
+    archive_json = "jj.json"
 
+    if not os.path.exists(archive_json):
+        print("No study sessions found")
+        return
 
+    with open(archive_json, "r", encoding="utf-8") as archivo:
+        sessions = json.load(archivo)
+
+    today = date.today()
+    current_month = today.month
+    current_year = today.year
+
+    # Filtrar sesiones del mes actual
+    monthly_sessions = [s for s in sessions if date.fromisoformat(s["date"]).month == current_month and date.fromisoformat(s["date"]).year == current_year]
+
+    if not monthly_sessions:
+        print("No sessions recorded this month.")
+        return
+
+    total_duration = 0
+    total_sessions = 0
+
+    # Agrupar sesiones por semanas
+    from collections import defaultdict
+    weekly_summary = defaultdict(int)  # clave = numero de semana, valor = duracion lunes a viernes
+
+    for sesion in monthly_sessions:
+        fecha = date.fromisoformat(sesion["date"])
+        duration = sesion["duration"]
+        name_day = fecha.strftime("%A")
+
+        total_sessions += 1
+        total_duration += duration
+
+        # Solo sumar lunes a viernes para el premio
+        if name_day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]:
+            week_number = fecha.isocalendar().week
+            weekly_summary[week_number] += duration
+
+    # Calcular helados ganados (>=10 horas de lunes a viernes por semana)
+    helados = 0
+    for dur in weekly_summary.values():
+        if dur >= 36000:  # 10 horas = 36000 segundos
+            helados += 1
+
+    # Mostrar reporte mensual
+    total_h = total_duration // 3600
+    total_m = (total_duration % 3600) // 60
+
+    print("\nMonthly Report")
+    print(f"Total sessions this month: {total_sessions}")
+    print(f"Total study time: {total_h}h {total_m}m")
+    print(f"Helados ganados (modo Zuckerberg activado): {helados} 🍦")
 
 #LOGIC
 
@@ -175,7 +228,7 @@ while True:
     elif option_num == 2:
         weekly_report()
     elif option_num == 3:
-        print("Monthly report")
+        monthly_report()
     elif option_num == 4:
         print("Bye see you later") #chau hasta luego
         break
